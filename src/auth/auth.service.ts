@@ -10,26 +10,40 @@ export class AuthService {
         private jwtService: JwtService,
     ){}
 
-    async register(username: string, email: string, password: string, phone: string){
+    async register(username: string, email: string, password: string, phone: string, role: string){
         const existingUser = await this.usersService.findByUsername(username);
         if (existingUser){
             throw new UnauthorizedException("User is already exist");
         }
-        return this.usersService.craeteUser(username, email, password, phone);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log(password);
+        console.log(hashedPassword);
+
+        const userCount = await this.usersService.countUsers();
+        const userRole = userCount === 0 ? "admin" : role || "user";
+        
+        return await this.usersService.createUser(username, email, hashedPassword, userRole, phone);
     }
 
     async login(username: string, password: string) : Promise<{access_token: string}>{
         const user = await this.usersService.findByUsername(username);
+        console.log(user);
         if(!user){
+            console.log(`User not found for username: ${username}`); 
             throw new UnauthorizedException("Incorrect username or password");
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
+        console.log(`password: ${password}, hashed password: ${user.password}, isMatch: ${isMatch}`); 
         if(!isMatch){
-            throw new UnauthorizedException("Incorrect username or password");
+            console.log(`Entered password: ${password}`);
+            console.log(`Hashed password: ${user.password}`);
+            console.log(`Password match: ${isMatch}`);
+            throw new UnauthorizedException("Cannot password");
         }
 
-        const payload = {username: user.username, sub: user.id};
+        const payload = {username: user.username, sub: user.id, role: user.role};
         return {access_token: this.jwtService.sign(payload)};
     }
+
 }

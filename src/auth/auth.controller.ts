@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -11,9 +11,10 @@ export class AuthController {
     @Body("email") email: string,
     @Body("password") password: string,
     @Body("phone") phone: string,
+    @Body("role") role: string
   ){
     try{
-      return this.authService.register(username, email, password, phone);
+      return this.authService.register(username, email, password, phone, role);
     } catch(e){
       throw new Error("Register error!");
     }
